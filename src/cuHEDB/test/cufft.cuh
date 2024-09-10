@@ -11,24 +11,6 @@
 #include <array>
 #include <vector>
 
-#if 1
-template <class P> using Polynomial_test = std::array<typename P::T, P::n>;
-template <class P> using DecomposedPolynomial_test = Polynomial_test<P>;
-template <class P> using PolynomialInFD_test = std::array<double, P::n>;
-template <class P> using DecomposedPolynomialInFD_test = PolynomialInFD_test<P>;
-template <class P> using TRLWE_test = std::array<Polynomial_test<P>, P::k + 1>;//uint32_t [2][1024]
-template <class P> using TRLWEInFD_test = std::array<PolynomialInFD_test<P>, P::k + 1>;//[2][1024]
-template <class P> using TRGSWFFT_test = std::array<TRLWEInFD_test<P>, (P::k + 1) * P::l>;//double [6][2][1024]
-
-template <class P> using TLWE_test = std::array<typename P::T, P::k * P::n + 1>;
-
-template <class P>
-using BootstrappingKeyFFT_test = std::array<TRGSWFFT_test<typename P::targetP>, P::domainP::n>;
-
-template <class P>
-using KeySwitchingKey_test = std::array<std::array<std::array<TLWE_test<typename P::targetP>, (1 << P::basebit) - 1>, P::t>, P::domainP::k * P::domainP::n>;
-#endif
-
 template<class P>
 __device__ void polynomialMulByXaiMinusOne(double4 *res, double *poly, const uint32_t a, int idx0, int idx1, int digit) {
   constexpr typename P::T offset = 2181562368;

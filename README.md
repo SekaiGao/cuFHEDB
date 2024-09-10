@@ -1,6 +1,8 @@
-# cuFHEDB: 
-CUDA-accelerated Fully Homomorphic Encryption DataBase
+# cuFHEDB
+CUDA-accelerated Fully Homomorphic Encryption Database based on HE<sup>3</sup>DB
+
 ## Requirements
+To build and run cuFHEDB, ensure the following dependencies are installed:
 
 ```
 git 
@@ -9,21 +11,25 @@ cmake >= 3.16
 GMP 6.2.0
 ```
 
+
 ## Building cuFHEDB
-You can build the cuFHEDB by executing the following commands:
+Follow these steps to build cuFHEDB:
+
 ```
+bash
 mkdir build
 cd build
-cmake .. 
+cmake ..
 make -j
 ```
-Then you can run the TPC-H query in 
-the `build/bin/` directory.
+
+After the build is complete, you can execute TPC-H queries located in the build/bin/ directory.
 
 
 ## Examples
 
 ### Query Evaluation
-- codes `test/TPCH_Q1.cu`
-- output binary `build/bin/TPCH_Q1`
-- This demo shows the evaluation of TPC-H Q1 over a 2^{10} rows of encrypted database.
+
+- Source code: test/TPCH_Q1.cu
+- Output binary: build/bin/TPCH_Q1
+- Description: This example demonstrates the evaluation of the TPC-H Q1 query on an encrypted database with 2<sup>10</sup> rows.
