@@ -15,7 +15,7 @@
 using namespace HEDB;
 using namespace TFHEpp;
 
-const int rows = 1 << 14; // Number of plaintexts
+const int rows = 1 << 18; // Number of plaintexts
 
 /***
 select
@@ -429,7 +429,7 @@ int main() {
   warmupGPU();
   // Lvl1
   std::cout << "Encrypting" << std::endl;
-
+  std::cout << std::fixed << std::setprecision(3);
   double costs;
   std::chrono::system_clock::time_point start, end;
   start = std::chrono::system_clock::now();
@@ -484,9 +484,9 @@ int main() {
 
   Filter_Cipher_d(cres, cres1, cipher_lineitem, cipher_type, cipher_date, ek, sk, pres, pres1);
 
-  //Query(plain_lineitem, pres, pres1);
+  Query(plain_lineitem, pres, pres1);
 
-#if 1
+#if 0
   std::vector<Lvl1::T> &discounts = plain_lineitem[4];
   std::vector<Lvl1::T> &prices = plain_lineitem[3];
 

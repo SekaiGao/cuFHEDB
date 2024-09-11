@@ -15,7 +15,7 @@
 using namespace HEDB;
 using namespace TFHEpp;
 
-const int rows = 1 << 14; // Number of plaintexts
+const int rows = 1 << 18; // Number of plaintexts
 
 /***
     TPC-H Query 12
@@ -575,7 +575,7 @@ int main() {
 
   // Lvl1
   std::cout << "Encrypting" << std::endl;
-
+  std::cout << std::fixed << std::setprecision(3);
   double costs;
   std::chrono::system_clock::time_point start, end;
   start = std::chrono::system_clock::now();
@@ -631,8 +631,8 @@ int main() {
 
   Filter_Cipher_d(cres, cipher_lineitem, cipher_date, cipher_num, ek, sk, pres);
 
-  //Query(pres);
-#if 1
+  Query(pres);
+#if 0
   aggregation(cres, pres, Lvl1::n, rows, sk);
 
   Filter_Cipher_h(cres, cipher_lineitem, cipher_date, cipher_num, ek, sk, pres);

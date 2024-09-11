@@ -15,7 +15,7 @@
 using namespace HEDB;
 using namespace TFHEpp;
 
-const int rows = 1<<14; // Number of plaintexts
+const int rows = 1<<10; // Number of plaintexts
 
 /***
 TPC-H Query 1
@@ -285,13 +285,11 @@ void Filter_Cipher_d(std::vector<std::vector<TLWELvl1>> &cres,
   pred_res[2].resize(lineitem_rows);
   pred_res[3].resize(lineitem_rows);
 
-  //cout<<"cipher: "<<endl;
   for (size_t i = 0; i < lineitem_rows; ++i) {
     pred_res[0][i] = TFHEpp::tlweSymInt32Decrypt<Lvl1>(cres[0][i], pow(2., 29),sk.key.get<Lvl1>());
 	  pred_res[1][i] = TFHEpp::tlweSymInt32Decrypt<Lvl1>(cres[1][i], pow(2., 29),sk.key.get<Lvl1>());
 	  pred_res[2][i] = TFHEpp::tlweSymInt32Decrypt<Lvl1>(cres[2][i], pow(2., 29),sk.key.get<Lvl1>());
 	  pred_res[3][i] = TFHEpp::tlweSymInt32Decrypt<Lvl1>(cres[3][i], pow(2., 29),sk.key.get<Lvl1>());
-    //cout<<pred_res[0][i]<<'\t'<<pred_res[1][i]<<'\t'<<pred_res[2][i]<<'\t'<<pred_res[3][i]<<endl;
   }
 
 }
@@ -547,14 +545,12 @@ void aggregation(std::vector<std::vector<TLWELvl1>> &pred_cres,
 
 int main() {
 
-  //std::cout<<num_SMs<<"  "<<num_stream<<std::endl;
-
   omp_set_num_threads(num_stream);
 
   warmupGPU();
   // Lvl1
   std::cout << "Encrypting" << std::endl;
-
+  std::cout << std::fixed << std::setprecision(3);
   double costs;
   std::chrono::system_clock::time_point start, end;
   start = std::chrono::system_clock::now();
@@ -610,8 +606,8 @@ int main() {
 
   Filter_Cipher_d(cres, cipher_lineitem, cipher_date, cipher_bool, ek, sk, pres);
 
-  //Query(plain_lineitem, pres);
-#if 1
+  Query(plain_lineitem, pres);
+#if 0
   std::vector<Lvl1::T> &quantity = plain_lineitem[3];
 
   aggregation(cres, pres, Lvl1::n, quantity, rows, sk);

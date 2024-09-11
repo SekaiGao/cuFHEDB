@@ -20,7 +20,6 @@ namespace HEDB
         {
             sub_tlwe[i] = cipher2[i] - cipher1[i];
         }
-        //减法需要plain_bits+1位保存结果(正负号)
         HomMSB(res, sub_tlwe, plain_bits + 1, ek, result_type);
     }
 
@@ -34,7 +33,6 @@ namespace HEDB
             sub_tlwe[i] = cipher1[i] - cipher2[i];
         }
         HomMSB(res, sub_tlwe, plain_bits + 1, ek, LOGIC);
-        // res每位取负
         HomNOT<Lvl1>(res, res);
         if (IS_ARITHMETIC(result_type)) TFHEpp::LOG_to_ARI(res, res, ek);
     }
@@ -66,7 +64,6 @@ namespace HEDB
         if (IS_ARITHMETIC(result_type)) TFHEpp::LOG_to_ARI(res, res, ek);
     }
 
-    // equal是否有改进空间?
     template <typename P>
     void equal(TFHEpp::TLWE<P> &cipher1, TFHEpp::TLWE<P> &cipher2, TLWELvl1 &res, uint32_t plain_bits, TFHEEvalKey &ek, bool result_type)
     {

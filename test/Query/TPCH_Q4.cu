@@ -15,7 +15,7 @@
 using namespace HEDB;
 using namespace TFHEpp;
 
-const int rows = 1 << 14; // Number of plaintexts
+const int rows = 1 << 18; // Number of plaintexts
 
 /***
 select
@@ -493,7 +493,7 @@ void aggregation(std::vector<std::vector<TLWELvl1>> &pred_cres,
   cout << "MEDIUM" << ",\t " << abs(std::round(agg_result[2][0])) << std::endl;
   cout << "LOW" << ",\t " << abs(std::round(agg_result[3][0])) << std::endl;
 
-
+#if 0
   std::vector<TLWELvl1> crst(4);
   std::vector<uint32_t> rst(4);
 
@@ -530,7 +530,7 @@ void aggregation(std::vector<std::vector<TLWELvl1>> &pred_cres,
   cout << "HIGH" << ",\t " << rst[1] << std::endl;
   cout << "MEDIUM" << ",\t " << rst[2] << std::endl;
   cout << "LOW" << ",\t " << rst[3] << std::endl;
-
+#endif
 
   std::cout << "\nAggregation time: " << aggregation_time << "ms" << std::endl;
 
@@ -543,7 +543,7 @@ int main() {
 
   // Lvl1
   std::cout << "Encrypting" << std::endl;
-
+  std::cout << std::fixed << std::setprecision(3);
   double costs;
   std::chrono::system_clock::time_point start, end;
   start = std::chrono::system_clock::now();
@@ -599,9 +599,9 @@ int main() {
 
   Filter_Cipher_d(cres, cipher_order, cipher_date, cipher_num, ek, sk, pres);
 
-  //Query(pres);
+  Query(pres);
 
-#if 1
+#if 0
   aggregation(cres, pres, Lvl1::n, rows, sk);
 
   Filter_Cipher_h(cres, cipher_order, cipher_date, cipher_num, ek, sk, pres);

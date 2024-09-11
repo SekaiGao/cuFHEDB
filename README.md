@@ -16,9 +16,7 @@ GMP 6.2.0
 Follow these steps to build cuFHEDB:
 
 ```
-bash
-mkdir build
-cd build
+mkdir build && cd build
 cmake ..
 make -j
 ```

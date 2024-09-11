@@ -2,13 +2,11 @@
 #include "HEDB/utils/utils.h"
 namespace HEDB
 {
-    // 结果, 密文, 评估密钥, 结果类型(Logic, Arithmetic)
     void ExtractMSB5(TLWELvl1 &res, const TLWELvl1 &tlwe, const TFHEEvalKey &ek, bool result_type)
     {
-        MSBGateBootstrapping(res, tlwe, ek, result_type);// 其中keySwitch可能可并行
+        MSBGateBootstrapping(res, tlwe, ek, result_type);
     }
-    //测试各部分耗时
-    // plain_bits: 明文bits数(6-9)
+ 
     void ExtractMSB9(TLWELvl1 &res, const TLWELvl1 &tlwe, uint32_t plain_bits, const TFHEEvalKey &ek, bool result_type)
     {
         TLWELvl1 shift_tlwe, sign_tlwe5;
@@ -33,7 +31,6 @@ namespace HEDB
         {
             res[i] = tlwe[i] - shift_tlwe[i];
         }
-        // ct5小于5bits, 直接提取
         ExtractMSB5(res, res, ek, result_type);
     }
     
@@ -55,7 +52,6 @@ namespace HEDB
         {
             res[i] = tlwe[i] - shift_tlwe[i];
         }
-        // ct5为前5位数
         ExtractMSB9(res, res, plain_bits - 4, ek, result_type); //plain_bits-5?
     }
 

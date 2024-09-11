@@ -15,7 +15,7 @@
 using namespace HEDB;
 using namespace TFHEpp;
 
-const int rows = 1 << 14; // Number of plaintexts
+const int rows = 1 << 18; // Number of plaintexts
 
 /***
 select
@@ -292,13 +292,16 @@ void Filter_Cipher_h(std::vector<TLWELvl1> &cres,
 
     end = std::chrono::system_clock::now();
     double costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    
+    std::cout << "Filter Time on CPU: " << costs / 1000 << "ms" << std::endl;
+
 #if 0
     uint32_t rlwe_scale_bits = 29;
     for (size_t i = 0; i < lineitem_rows; ++i) {
         TFHEpp::log_rescale(cres[i], cres[i], rlwe_scale_bits, ek);
     }
 
-    std::cout << "Filter Time on CPU: " << costs / 1000 << "ms" << std::endl;
+   
 
     pred_res.resize(lineitem_rows);
 
@@ -474,9 +477,9 @@ int main() {
 
   Filter_Cipher_d(cres, cipher_lineitem, cipher_num, ek, sk, pres);
 
-  //Query(plain_lineitem, pres);
+  Query(plain_lineitem, pres);
 
-#if 1
+#if 0
   aggregation(cres, pres, Lvl1::n, plain_lineitem[0], rows, sk);
 
   Filter_Cipher_h(cres, cipher_lineitem, cipher_num, ek, sk, pres);

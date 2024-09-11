@@ -139,7 +139,6 @@ public:
   }
 
   __host__ inline void MoveOut(std::array<uint32_t, 1025> &tlwe1, const int row_idx = 0) {
-    //cudaMemcpy(tlwe1.data(), tlwe1_d, sizeof(uint32_t) * 1025, cudaMemcpyDeviceToHost);
     uint32_t *dest_ptr = (uint32_t *)((char *)tlwe1_d + row_idx * tlwe1_pitch);
     cudaMemcpy2D(tlwe1.data(), tlwe1_pitch, dest_ptr, sizeof(uint32_t) * 1025, sizeof(uint32_t) * 1025, 1, cudaMemcpyDeviceToHost);
   }
@@ -167,11 +166,12 @@ public:
 
     cufft::GateBootstrappingTLWE2TLWEFFT<P><<<6, 64>>>(tlwe1_i, uint_inout_i, tlwe_i, BootstrappingKeyfft_d, u, buf_i, Ns2, SyncIn, SyncOut, false);
     cudaDeviceSynchronize();
-
+#if 0
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
       printf("CUDA Error: %s\n", cudaGetErrorString(err));
     }
+#endif
   }
 
 
@@ -191,11 +191,12 @@ public:
     cudaStreamSynchronize(stream[stream_id]);
 
     cudaMemcpy2DAsync(tlwe1.data(), tlwe1_pitch, tlwe1_i, sizeof(uint32_t) * 1025, sizeof(uint32_t) * 1025, 1, cudaMemcpyDeviceToHost, stream[stream_id]);
-  
+#if 0
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
       printf("CUDA Error: Stream %d, %s\n", stream_id, cudaGetErrorString(err));
     }
+#endif
   }
 
   template <class P>
@@ -210,11 +211,12 @@ public:
 
     cufft::GateBootstrappingTLWE2TLWEFFT<P><<<6, 64>>>(tlwe1_i, uint_inout_i, tlwe_i, BootstrappingKeyfft_d, scale_bits, buf_i, Ns2, Syncin_i, Syncout_i, true);
     cudaDeviceSynchronize();
-
+#if 0
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
       printf("CUDA Error: %s\n", cudaGetErrorString(err));
     }
+#endif
   }
 
   template <class P>
@@ -233,11 +235,12 @@ public:
     cudaStreamSynchronize(stream[stream_id]);
 
     cudaMemcpy2DAsync(tlwe1.data(), tlwe1_pitch, tlwe1_i, sizeof(uint32_t) * 1025, sizeof(uint32_t) * 1025, 1, cudaMemcpyDeviceToHost, stream[stream_id]);
-    
+#if 0  
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
       printf("CUDA Error: Stream %d, %s\n", stream_id, cudaGetErrorString(err));
     }
+#endif
   }
 
   __host__ inline ~CuFFT_Torus() {

@@ -418,11 +418,11 @@ __device__ inline void CplxMul(double4 &tcs, double4 &tsn, double4 &re1, double4
 
 __device__ inline uint4 double4ToUint4(double4 &d) {
   uint4 u;
-  // round to nearest
-  u.x = __double2ll_rz(d.x);
-  u.y =	__double2ll_rz(d.y);
-  u.z =	__double2ll_rz(d.z);
-  u.w =	__double2ll_rz(d.w);
+  // round to nearest(or round to zero)
+  u.x = __double2ll_rn(d.x);
+  u.y =	__double2ll_rn(d.y);
+  u.z =	__double2ll_rn(d.z);
+  u.w =	__double2ll_rn(d.w);
   return u;
 }
 
@@ -604,9 +604,6 @@ __device__ void ifft1024(double4 *shared_pre, double4 *shared_pim, const int32_t
 
         shared_pre[idx0] = re;
         shared_pim[idx0] = im;
-        // out_rev_dre[idx0] = re;
-        // out_rev_dim[idx0] = im;
-        // sync?
       }
     }  
 }

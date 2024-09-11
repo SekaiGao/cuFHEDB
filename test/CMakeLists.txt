@@ -25,3 +25,4 @@ target_link_libraries(TPCH_Q1 HEDB ${CUDA_LIBRARIES} OpenMP::OpenMP_CXX)
 add_executable(genkey GenKey.cu)
 target_include_directories(genkey PRIVATE ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 target_link_libraries(genkey HEDB ${CUDA_LIBRARIES} OpenMP::OpenMP_CXX)
+
