@@ -749,7 +749,7 @@ extern "C" void fft(const void *tables, double *c) {
             }
         }
         cur_tt += nn;
-    }
+    }  
 
     //multiply by omb^j
     for (int32_t j = 0; j < ns4; j += 4) {
@@ -797,7 +797,7 @@ extern "C" void ifft(const void *tables, double *c) {
         add4(d1, tmp1, tmp2);
     }
 
-
+#if 1
     //at the beginning of iteration nn
     // a_{j,i} has P_{i%nn}(omega^j) 
     // where j between [rev(1) and rev(3)[
@@ -883,6 +883,7 @@ extern "C" void ifft(const void *tables, double *c) {
             add4(d1, tmp0, tmp1);
         }
     }
+#endif
 }
 #endif
 

@@ -73,4 +73,4 @@ void readFromFile(const std::string& filename,
     inFile.close();
 }
 
-std::string path = "/home/gaoshijie/cuHEDB/test/Query/key.bin";
+std::string path = "/home/gaoshijie/cuHEDB/test/HE3_Query/key.bin";

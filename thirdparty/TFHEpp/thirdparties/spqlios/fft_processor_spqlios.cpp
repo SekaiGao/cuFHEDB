@@ -121,6 +121,35 @@ void FFT_Processor_Spqlios::execute_direct_torus32(uint32_t *res, const double *
     for (int32_t i = 0; i < N; i++) res[i] = uint32_t(int64_t(real_inout_direct[i]));
 }
 
+void FFT_Processor_Spqlios::execute_direct_torus32(double *res, const double *a) {
+    //TODO: parallelization
+    static const double _2sN = double(2) / double(N);
+    //for (int32_t i=0; i<N; i++) real_inout_direct[i]=a[i]*_2sn; //nomalize
+    {
+        double *dst = real_inout_direct;
+        const double *sit = a;
+        const double *send = a + N;
+        //double __2sN = 2./N;
+        const double *bla = &_2sN;
+        __asm__ __volatile__ (
+        "vbroadcastsd (%3),%%ymm2\n"
+                "1:\n"
+                "vmovupd (%1),%%ymm0\n"
+                "vmulpd	%%ymm2,%%ymm0,%%ymm0\n"
+                "vmovapd %%ymm0,(%0)\n"
+                "addq $32,%1\n"
+                "addq $32,%0\n"
+                "cmpq %2,%1\n"
+                "jb 1b\n"
+        : "=r"(dst), "=r"(sit), "=r"(send), "=r"(bla)
+        : "0"(dst), "1"(sit), "2"(send), "3"(bla)
+        : "%ymm0", "%ymm2", "memory"
+        );
+    }
+    fft(tables_direct, real_inout_direct);
+    for (int32_t i = 0; i < N; i++) res[i] = real_inout_direct[i];
+}
+
 void FFT_Processor_Spqlios::execute_direct_torus32_rescale(uint32_t *res, const double *a, const double Δ) {
     //TODO: parallelization
     static const double _2sN = double(2) / double(N);
@@ -188,6 +217,27 @@ void FFT_Processor_Spqlios::execute_direct_torus64(uint64_t* res, const double* 
         int16_t trans = expo-1075;
         uint64_t val2 = trans>0?(val<<trans):(val>>-trans);
         res[i]=(vals[i]>>63)?-val2:val2;
+    }
+}
+
+void FFT_Processor_Spqlios::execute_direct_torus64(double* res, const double* a) {
+    static const double _2sN = double(2)/double(N);
+    //static const double _2p64 = pow(2.,64);
+    for (int i=0; i<N; i++) real_inout_direct[i]=a[i]*_2sN;
+    fft(tables_direct,real_inout_direct); 
+    // const uint64_t* const vals = (const uint64_t*) real_inout_direct;
+    // static const uint64_t valmask0 = 0x000FFFFFFFFFFFFFul;
+    // static const uint64_t valmask1 = 0x0010000000000000ul;
+    // static const uint16_t expmask0 = 0x07FFu;
+    for (int i=0; i<N; i++) {
+        // uint64_t val = (vals[i]&valmask0)|valmask1; //mantissa on 53 bits
+        // uint16_t expo = (vals[i]>>52)&expmask0; //exponent 11 bits
+        // // 1023 -> 52th pos -> 0th pos
+        // // 1075 -> 52th pos -> 52th pos
+        // int16_t trans = expo-1075;
+        // uint64_t val2 = trans>0?(val<<trans):(val>>-trans);
+        // res[i]=(vals[i]>>63)?-val2:val2;
+        res[i]=real_inout_direct[i];
     }
 }
 

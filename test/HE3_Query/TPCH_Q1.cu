@@ -545,7 +545,7 @@ void aggregation(std::vector<std::vector<TLWELvl1>> &pred_cres,
 
 int main() {
 
-  omp_set_num_threads(num_stream);
+  omp_set_num_threads(num_stream1);
 
   warmupGPU();
   // Lvl1
@@ -558,17 +558,20 @@ int main() {
   std::random_device seed_gen;
   std::default_random_engine engine(seed_gen());
 
-  TFHEpp::BootstrappingKeyFFT<lvl01param> *bkfft = new TFHEpp::BootstrappingKeyFFT<lvl01param>;
-  TFHEpp::KeySwitchingKey<TFHEpp::lvl10param> *isk = new TFHEpp::KeySwitchingKey<TFHEpp::lvl10param>;  
+  //TFHEpp::BootstrappingKeyFFT<lvl01param> *bkfft = new TFHEpp::BootstrappingKeyFFT<lvl01param>;
+  //TFHEpp::KeySwitchingKey<TFHEpp::lvl10param> *isk = new TFHEpp::KeySwitchingKey<TFHEpp::lvl10param>;  
  
   TFHESecretKey sk;
   TFHEEvalKey ek;
-  // ek.emplacebkfft<Lvl01>(sk);
-  // ek.emplaceiksk<Lvl10>(sk);
+  ek.emplacebkfft<Lvl01>(sk);
+  ek.emplacebkfft<Lvl02>(sk);
+  ek.emplaceiksk<Lvl10>(sk);
+  ek.emplaceiksk<Lvl20>(sk);
+  // ek.emplaceiksk<Lvl20>(sk);
 
-  readFromFile(path, sk.key.lvl1, *bkfft, *isk);
-  ek.bkfftlvl01.reset(bkfft);
-  ek.iksklvl10.reset(isk);
+  // readFromFile(path, sk.key.lvl1, *bkfft, *isk);
+  // ek.bkfftlvl01.reset(bkfft);
+  // ek.iksklvl10.reset(isk);
 
   end = std::chrono::system_clock::now();
   costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -578,7 +581,8 @@ int main() {
   start = std::chrono::system_clock::now();
 
   //load BK to device
-  cufftplvl.LoadBK<lvl1param>(*ek.bkfftlvl01);
+  cufftlvl1.LoadBK(*ek.bkfftlvl01);
+  cufftlvl2.LoadBK(*ek.bkfftlvl02);
 
   end = std::chrono::system_clock::now();
   costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();

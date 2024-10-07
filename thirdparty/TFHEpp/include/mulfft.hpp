@@ -66,6 +66,15 @@ inline void TwistFFT(Polynomial<P> &res, const PolynomialInFD<P> &a)
 }
 
 template <class P>
+inline void TwistFFT(PolynomialInFD<P> &res, const PolynomialInFD<P> &a)
+{
+    if constexpr (std::is_same_v<typename P::T, uint32_t>)
+        fftplvl1.execute_direct_torus32(res.data(), a.data());
+    else
+        fftplvl2.execute_direct_torus64(res.data(), a.data());
+}
+
+template <class P>
 inline void TwistFFTrescale(Polynomial<P> &res, const PolynomialInFD<P> &a)
 {
     if constexpr (std::is_same_v<typename P::T, uint32_t>)

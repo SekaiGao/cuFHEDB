@@ -3,7 +3,7 @@
 #include "HEDB/utils/types.h"
 #include "HEDB/utils/utils.h"
 #include "cuHEDB/HomCompare_gpu.cuh"
-#include "Query/fastR.h"
+#include "HE3_Query/fastR.h"
 #include <chrono>
 #include <fstream>
 #include <iostream>

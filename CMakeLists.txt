@@ -4,16 +4,8 @@ project(HEDB VERSION 1.0 LANGUAGES CXX CUDA)
 
 message(STATUS "Initial CUDA_NVCC_FLAGS: ${CUDA_NVCC_FLAGS}")
 
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11")
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} -O3")
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} -gencode=arch=compute_86,code=sm_86")
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math")
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} --extra-device-vectorization")
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} --allow-expensive-optimizations")
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} --ptxas-options=-O3")
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} -Xptxas -dlcm=ca")
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
-set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} --default-stream legacy")
+set(CUDA_NVCC_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++17 -O3 -gencode=arch=compute_86,code=sm_86 --ftz=true --use_fast_math=true --extra-device-vectorization --no-exception --allow-expensive-optimizations --ptxas-options=-O3 -Xptxas -dlcm=ca -Xcompiler -fopenmp")
+
 
 message(STATUS "Updated CUDA_NVCC_FLAGS: ${CUDA_NVCC_FLAGS}")
 
@@ -58,5 +50,18 @@ add_library(HEDB STATIC ${HEDB_SOURCE_FILES})
 target_include_directories(HEDB PUBLIC src)
 target_include_directories(HEDB PUBLIC thirdparty/SEAL/natice/src)
 target_link_libraries(HEDB tfhe++ seal)
+
+# ARCEDB
+set(ARCEDB_SOURCE_FILES "")
+add_subdirectory(src/ARCEDB/utils)
+add_subdirectory(src/ARCEDB/conversion)
+add_subdirectory(src/ARCEDB/comparison)
+# add_subdirectory(src/cuHEDB)
+
+# Add ARCEDB library
+add_library(ARCEDB STATIC ${ARCEDB_SOURCE_FILES})
+target_include_directories(ARCEDB PUBLIC src)
+target_include_directories(ARCEDB PUBLIC thirdparty/SEAL/natice/src)
+target_link_libraries(ARCEDB tfhe++ seal)
 
 add_subdirectory(test)

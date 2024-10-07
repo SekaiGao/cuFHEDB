@@ -2,7 +2,7 @@
 enable_language(ASM)
 
 set(SRCS_FMA spqlios-fft-fma.s spqlios-ifft-fma.s fft_processor_spqlios.cpp
-              spqlios-fft-impl.cpp)
+             spqlios-fft-impl.cpp)
 
 #set(SRCS_FMA fft_processor_spqlios.cpp spqlios-fft-impl.cpp)
 

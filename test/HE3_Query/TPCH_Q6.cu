@@ -15,7 +15,7 @@
 using namespace HEDB;
 using namespace TFHEpp;
 
-const int rows = 1 << 18; // Number of plaintexts
+const int rows = 1 << 10; // Number of plaintexts
 
 /***
  * TPC-H Query
@@ -27,7 +27,7 @@ const int rows = 1 << 18; // Number of plaintexts
         and discount between 8 and 10
         and quantity < 3;
 
-    consider date in [101~302]
+    consider date in [10101~10302]
 */
 
 struct Plain_Bits {
@@ -180,17 +180,16 @@ void Filter_Cipher_d(std::vector<std::vector<TLWE<Lvl1>>> &ciphertexts, std::vec
     for (size_t i = 0; i < rows; ++i) {
         uint32_t stream_id = omp_get_thread_num();
 
-		cuHEDB::greater_than_equal<Lvl1>(shipdates[i], date1, pred_cres1[i], bits.shipdate_bits, ek, LOGIC, stream_id);
-		cuHEDB::less_than<Lvl1>(shipdates[i], date2, pred_cres2[i], bits.shipdate_bits, ek, LOGIC, stream_id);
-		cuHEDB::HomAND(pred_cres[i], pred_cres1[i], pred_cres2[i], ek, LOGIC, stream_id);//取AND, 得shipdate过滤结果
-		cuHEDB::greater_than_equal<Lvl1>(discounts[i], discount1, pred_cres3[i], bits.discount_bits, ek, LOGIC, stream_id);
-		cuHEDB::HomAND(pred_cres[i], pred_cres[i], pred_cres3[i], ek, LOGIC, stream_id);
-		cuHEDB::less_than_equal<Lvl1>(discounts[i], discount2, pred_cres4[i], bits.discount_bits, ek, LOGIC, stream_id);
-		cuHEDB::HomAND(pred_cres[i], pred_cres[i], pred_cres4[i], ek, LOGIC, stream_id);
-		cuHEDB::less_than<Lvl1>(quantities[i], quantity1, pred_cres5[i], bits.quantity_bits, ek, LOGIC, stream_id);
-		cuHEDB::HomAND(pred_cres[i], pred_cres[i], pred_cres5[i], ek, ARITHMETIC, stream_id);
-
-        cudaDeviceSynchronize();
+		    cuHEDB::greater_than_equal<Lvl1>(shipdates[i], date1, pred_cres1[i], bits.shipdate_bits, ek, LOGIC, stream_id);
+		    cuHEDB::less_than<Lvl1>(shipdates[i], date2, pred_cres2[i], bits.shipdate_bits, ek, LOGIC, stream_id);
+		    cuHEDB::HomAND(pred_cres[i], pred_cres1[i], pred_cres2[i], ek, LOGIC, stream_id);//AND -> shipdate result
+		    cuHEDB::greater_than_equal<Lvl1>(discounts[i], discount1, pred_cres3[i], bits.discount_bits, ek, LOGIC, stream_id);
+		    cuHEDB::HomAND(pred_cres[i], pred_cres[i], pred_cres3[i], ek, LOGIC, stream_id);
+		    cuHEDB::less_than_equal<Lvl1>(discounts[i], discount2, pred_cres4[i], bits.discount_bits, ek, LOGIC, stream_id);
+		    cuHEDB::HomAND(pred_cres[i], pred_cres[i], pred_cres4[i], ek, LOGIC, stream_id);
+		    cuHEDB::less_than<Lvl1>(quantities[i], quantity1, pred_cres5[i], bits.quantity_bits, ek, LOGIC, stream_id);
+		    cuHEDB::HomAND(pred_cres[i], pred_cres[i], pred_cres5[i], ek, ARITHMETIC, stream_id);
+        //cudaDeviceSynchronize();
     }
 
     end = std::chrono::system_clock::now();
@@ -199,7 +198,6 @@ void Filter_Cipher_d(std::vector<std::vector<TLWE<Lvl1>>> &ciphertexts, std::vec
     std::cout<<"Filter Time on GPU: "<< costs/1000 <<"ms"<< std::endl;
 
     uint32_t rlwe_scale_bits = 29;
-    #pragma omp parallel for
     for (size_t i = 0; i < rows; i++) {
       TFHEpp::ari_rescale(pred_cres[i], pred_cres[i], rlwe_scale_bits, ek);
     }
@@ -231,7 +229,7 @@ void Filter_Cipher_h(std::vector<std::vector<TLWE<Lvl1>>> &ciphertexts, std::vec
 	std::chrono::system_clock::time_point start, end;
   	start = std::chrono::system_clock::now();
 
-    for (size_t i = 0; i < rows; ++i) {
+  for (size_t i = 0; i < rows; ++i) {
 		greater_than_equal<Lvl1>(shipdates[i], date1, pred_cres1[i], bits.shipdate_bits, ek, LOGIC);
 		less_than<Lvl1>(shipdates[i], date2, pred_cres2[i], bits.shipdate_bits, ek, LOGIC);
 		HomAND(pred_cres[i], pred_cres1[i], pred_cres2[i], ek, LOGIC);
@@ -241,19 +239,17 @@ void Filter_Cipher_h(std::vector<std::vector<TLWE<Lvl1>>> &ciphertexts, std::vec
 		HomAND(pred_cres[i], pred_cres[i], pred_cres4[i], ek, LOGIC);
 		less_than<Lvl1>(quantities[i], quantity1, pred_cres5[i], bits.quantity_bits, ek, LOGIC);
 		HomAND(pred_cres[i], pred_cres[i], pred_cres5[i], ek, LOGIC);
-    }
+  }
 
 	end = std::chrono::system_clock::now();
   	double costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 	
 	std::cout<<"Filter Time on CPU: "<< costs/1000 <<"ms"<< std::endl;
-#if 0
-    std::vector<Lvl1::T> cpres;
 
 	for (size_t i = 0; i < rows; ++i) {
-        cpres.emplace_back(TFHEpp::tlweSymDecrypt<Lvl1>(pred_cres[i], sk.key.lvl1));
+        cres.emplace_back(TFHEpp::tlweSymDecrypt<Lvl1>(pred_cres[i], sk.key.lvl1));
     }
-#endif
+
 }
 
 void aggregation(std::vector<TLWELvl1> &pred_cres, std::vector<uint32_t> &pred_res, size_t tfhe_n,
@@ -363,12 +359,12 @@ void aggregation(std::vector<TLWELvl1> &pred_cres, std::vector<uint32_t> &pred_r
 
 int main() {
 
-  omp_set_num_threads(num_stream);
+  omp_set_num_threads(num_stream1);
 
   warmupGPU();
   // Lvl1
   std::cout << "Encrypting" << std::endl;
-  std::cout << std::fixed << std::setprecision(3);
+
   double costs;
   std::chrono::system_clock::time_point start, end;
   start = std::chrono::system_clock::now();
@@ -376,17 +372,12 @@ int main() {
   std::random_device seed_gen;
   std::default_random_engine engine(seed_gen());
   
-  TFHEpp::BootstrappingKeyFFT<lvl01param> *bkfft = new TFHEpp::BootstrappingKeyFFT<lvl01param>;
-  TFHEpp::KeySwitchingKey<TFHEpp::lvl10param> *isk = new TFHEpp::KeySwitchingKey<TFHEpp::lvl10param>;  
-
   TFHESecretKey sk;
   TFHEEvalKey ek;
-  // ek.emplacebkfft<Lvl01>(sk);
-  // ek.emplaceiksk<Lvl10>(sk);
-  //writeToFile(path, sk.key.lvl1, *ek.bkfftlvl01, *ek.iksklvl10);
-  readFromFile(path, sk.key.lvl1, *bkfft, *isk);
-  ek.bkfftlvl01.reset(bkfft);
-  ek.iksklvl10.reset(isk);
+  ek.emplacebkfft<Lvl01>(sk);
+  ek.emplaceiksk<Lvl10>(sk);
+  ek.emplacebkfft<Lvl02>(sk);
+  ek.emplaceiksk<Lvl20>(sk);
 
   end = std::chrono::system_clock::now();
   costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -396,7 +387,8 @@ int main() {
   start = std::chrono::system_clock::now();
 
   //load BK to device
-  cufftplvl.LoadBK<lvl1param>(*ek.bkfftlvl01);
+  cufftlvl1.LoadBK(*ek.bkfftlvl01);
+  //cufftlvl2.LoadBK(*ek.bkfftlvl02);
 
   end = std::chrono::system_clock::now();
   costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -408,7 +400,7 @@ int main() {
   // DataBase init
   std::vector<std::vector<Lvl1::T>> plaintexts, plain_condition{{101, 402}, {4, 10}, {50}};
   std::vector<std::vector<TLWE<Lvl1>>> ciphertexts, cipher_condition;
-  std::vector<Lvl1::T>  pres, pres1;
+  std::vector<Lvl1::T>  pres, pres1, pres2;
   std::vector<TLWE<Lvl1>> cres;
   // bits needed
   Plain_Bits bits;
@@ -435,7 +427,8 @@ int main() {
 
   aggregation(cres, pres, Lvl1::n, prices, discounts, rows, sk);
 
-  Filter_Cipher_h(ciphertexts, cipher_condition, ek, sk, pres1, bits);
+  Filter_Cipher_h(ciphertexts, cipher_condition, ek, sk, pres2, bits);
+  Query(plaintexts, pres2);
 #endif
   return 0;
 }

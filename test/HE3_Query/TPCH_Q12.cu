@@ -15,7 +15,7 @@
 using namespace HEDB;
 using namespace TFHEpp;
 
-const int rows = 1 << 18; // Number of plaintexts
+const int rows = 1 << 10; // Number of plaintexts
 
 /***
     TPC-H Query 12
@@ -571,7 +571,7 @@ void aggregation(std::vector<std::vector<TLWELvl1>> &pred_cres,
 
 int main() {
 
-  omp_set_num_threads(num_stream);
+  omp_set_num_threads(num_stream1);
 
   // Lvl1
   std::cout << "Encrypting" << std::endl;
@@ -605,7 +605,8 @@ int main() {
   start = std::chrono::system_clock::now();
 
   //load BK to device
-  cufftplvl.LoadBK<lvl1param>(*ek.bkfftlvl01);
+  cufftlvl1.LoadBK(*ek.bkfftlvl01);
+  //cufftlvl2.LoadBK(*ek.bkfftlvl02);
 
   end = std::chrono::system_clock::now();
   costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
