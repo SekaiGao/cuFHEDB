@@ -25,7 +25,7 @@ cuFHEDB/
 │
 ├── test/                       # Test files for various benchmarks
 │   ├── Database/				        # Database benchmark tests
-│	  │  	├── Healthcare/         # Healthcare benchmark tests
+│	  │	  ├── Healthcare/         # Healthcare benchmark tests
 │   │	  └── TPC-H/              # TPC-H benchmark tests
 │   └── FHE/                    # FHE benchmark tests
 │
