@@ -29,6 +29,7 @@ using namespace arcedb;
  *  test results and patient age, raising privacy risks.
  */
 
+constexpr int num_thread = 96; // setting multi threads
 
 struct PlainTable {
     std::vector<int> Age;
@@ -102,6 +103,9 @@ void plaintext_query(const HealthCare& records) {
         - Prints the query results.
 */
 void healthcare_query3(const std::string &filePath) {
+
+	omp_set_num_threads(num_thread);
+	
     std::cout << "ArcEDB Healthcare Query3 Test: "<< std::endl;
     std::cout << "--------------------------------------------------------"<< std::endl;
 
@@ -170,6 +174,7 @@ void healthcare_query3(const std::string &filePath) {
     std::cout << "Filtering..." << std::endl;
     double filtering_time_d = 0, aggregation_time = 0;
     start = std::chrono::system_clock::now(); 
+	#pragma omp parallel for
     for (size_t i = 0; i < rows; i++) {
         TLWELvl1 pre_res;
         equality_tfhepp(cr.test_results_ciphers[i], cr.test_results_predicate, pre_res, sk);
@@ -184,6 +189,7 @@ void healthcare_query3(const std::string &filePath) {
     std::cout << "Group By..." << std::endl;
     start = std::chrono::system_clock::now();
     // GROUP BY Gender
+	#pragma omp parallel for
     for (size_t i = 0; i < rows; i++)
     {
         TLWELvl1 pre_res;
@@ -200,6 +206,7 @@ void healthcare_query3(const std::string &filePath) {
 
     // aggregate
     TFHEpp::TLWE<aggP> agg_res1={}, agg_res2={}, agg_res3={}, agg_res4={}, mul_res;
+	#pragma omp parallel for
     for (size_t i = 0; i < rows; i++) {
         //lift to 15 bit precision for homomorphic addition
         lift_and_and(filter_res1[i], filter_res1[i], agg_filter_res1[i], agg_scale_bits, ek, sk);
