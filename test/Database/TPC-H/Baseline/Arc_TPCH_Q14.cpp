@@ -47,8 +47,12 @@ using namespace seal;
 size_t l_num = 1 << 4;
 size_t p_num = 1 << 4;
 
+constexpr int num_thread = 96; // setting multi threads
+
 void tpch_query14(size_t l_num, size_t p_num)
 {
+	omp_set_num_threads(num_thread);
+	
     std::cout << "ArcEDB TPC-H Query14 Test: "<< std::endl;
     std::cout << "--------------------------------------------------------"<< std::endl;
     std::cout << "Records: " << l_num * p_num << std::endl;
@@ -161,6 +165,7 @@ void tpch_query14(size_t l_num, size_t p_num)
 
     std::vector<TLWELvl1> ptype_res(p_num);
     // filtering part table
+	#pragma omp parallel for
     for (size_t i = 0; i < p_num; i++)
     {
         TLWELvl1 pre_res;
@@ -179,6 +184,7 @@ void tpch_query14(size_t l_num, size_t p_num)
 
     start = std::chrono::system_clock::now();
     //filtering lineitem table
+	#pragma omp parallel for
     for (size_t i = 0; i < l_num; i++)
     {
         TLWELvl1 pre_res;
@@ -197,6 +203,7 @@ void tpch_query14(size_t l_num, size_t p_num)
 
     std::vector<TLWELvl1> joined_res(p_num * l_num);
     //join table
+	#pragma omp parallel for
     for (size_t i = 0; i < l_num; i++) {
         for(size_t j=0;j<p_num;++j) {
             TLWELvl1 pre_res;
@@ -211,7 +218,8 @@ void tpch_query14(size_t l_num, size_t p_num)
     std::cout << "JOIN time: " << stept << "ms." << std::endl;
 
     filtering_time_d += stept;
-    
+
+	#pragma omp parallel for
     for (size_t i = 0; i < l_num; i++)
     {
         //filter_case_res[i] = joined_res[i * p_num];
