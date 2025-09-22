@@ -46,7 +46,7 @@ void FFT_test(uint32_t test_num) {
     cufhedb::cuCoreFHE<P> folding_fft(1);
     cufhedb::cuCoreFHE<Lvl2> negacyclic_fft(1);
 
-    TFHEpp::Polynomial<P> tlwefft1;
+    TFHEpp::Polynomial<P> tlwefft1, ffta1, ffta2;
     std::array<double, P::n> fftb1;
 
     TFHEpp::Polynomial<Lvl2> tlwefft2;
@@ -72,11 +72,19 @@ void FFT_test(uint32_t test_num) {
 
     // GPU IFFT latency test
     folding_fft.ifft_test(fftb1, tlwefft1, test_num, costs);
-    std::cout << "folding fft latency: " << costs / test_num << "μs." << std::endl;
+    std::cout << "folding ifft latency: " << costs / test_num << "μs." << std::endl;
 
     // GPU FFT latency test
     negacyclic_fft.ifft_test(fftb2, tlwefft2, test_num, costs);
-    std::cout << "TFHE-rs fft latency: " << costs / test_num << "μs." << std::endl;
+    std::cout << "TFHE-rs ifft latency: " << costs / test_num << "μs." << std::endl;
+
+	// GPU FFT latency test
+    folding_fft.fft_test(ffta1, fftb1, test_num, costs);
+    std::cout << "folding fft latency: " << costs / test_num << "μs." << std::endl;
+	
+	// GPU FFT latency test
+    folding_fft.fft_shuffle_test(ffta2, fftb1, test_num, costs);
+    std::cout << "folding fft (4x threads + warp shuffle) latency: " << costs / test_num << "μs." << std::endl;
 }
 
 int main() {
