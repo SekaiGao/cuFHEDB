@@ -571,6 +571,25 @@ public:
 
   }
 
+  __host__ inline void fft_shuffle_test(std::array<typename P::T, P::n> &res, std::array<double, P::n> &a, uint32_t test_num, double &cost) {
+    typename P::T *b_d;
+    cudaMalloc(&b_d, N * sizeof(typename P::T));
+    cudaMemcpy(ifftb_d, a.data(), sizeof(double) * N, cudaMemcpyHostToDevice);
+
+    std::chrono::system_clock::time_point start, end;
+    start = std::chrono::system_clock::now();
+    for (int i=0;i<test_num;++i) {
+      cufhedb::fft4x_warp<<<1, 4*num_thread>>>(b_d, ifftb_d, Ns2);
+      cudaDeviceSynchronize();
+    }
+    end = std::chrono::system_clock::now();
+    cost = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+
+    cudaMemcpy(res.data(), b_d, sizeof(typename P::T) * N, cudaMemcpyDeviceToHost);
+    cudaFree(b_d);
+
+  }
+
   template<int32_t batch_size>
   __host__ inline void ifft_th_test(std::vector<std::array<double, P::n>> &res, std::vector<std::array<typename P::T, P::n>> &a, uint32_t test_num, double &cost) {
     typename P::T *b_d;
