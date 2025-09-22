@@ -220,6 +220,135 @@ __device__ inline void fft1024(uint4 *out_direct_dre, uint4 *out_direct_dim, dou
     }
 }
 
+// 1024-point folding FFT + 4x threads with warp shuffle
+__device__ inline void fft1024_4xwarp(uint *out_direct_dre, uint *out_direct_dim, double *shared_pre, double *shared_pim, const int32_t Ns2, const int &idx) {
+
+    int ns8 = Ns2 >> 2; 
+
+    // trig table
+    const double *__restrict__ trig_table = (double *)tables_direct_d;
+
+    register double re, re1;
+    register double im, im1;
+    register double tsn, tcs;
+
+    register double _2sN = 1./512.;
+
+    double trig_table4[6] = {1., 0., 1., 0., 0., -1.};
+
+    {
+      int idx0 = idx << 1;
+      int idx1 = idx0 + 1;
+
+      // normalization
+      re = shared_pre[idx0] * _2sN;
+      im = shared_pim[idx0] * _2sN;
+      re1 = shared_pre[idx1] * _2sN;
+      im1 = shared_pim[idx1] * _2sN;
+
+      // nn-point FFT
+      #pragma unroll
+      for (int32_t nn = 2; nn <= Ns2; nn *= 2) { 
+        int32_t halfnn = nn / 2;
+        int32_t i = idx / halfnn; // quotient
+        int32_t j = idx % halfnn; // remainder
+        idx0 = i * (2 * halfnn) + j;
+        idx1 = idx0 + halfnn;
+
+        int32_t halfnn4 = nn / 8;
+        int32_t tidx = (halfnn4 + (idx/4) % halfnn4 - 1) * 8 + idx % 4;
+
+        if (nn == 2) {
+          tcs = trig_table4[0];
+          tsn = trig_table4[1];
+        } else if (nn == 4) {
+          tcs = trig_table4[2 + j];
+          tsn = trig_table4[2 + j + 2];
+        } else {
+          tcs = trig_table[tidx];
+          tsn = trig_table[tidx + 4];
+        }
+
+        int32_t max_nn = 32; // 32-point is the largest DFT fully handled within a warp
+        int32_t halfnn2 = nn / 4;
+        double re0, im0;
+        if (nn <= max_nn) { // warp shuffle
+
+          unsigned mask = __activemask();        
+          int lane = idx & 31;        
+          int partner = lane ^ halfnn2; // partner thread ID
+
+          double nbr_re  = __shfl_xor_sync(mask, re,  halfnn2);
+          double nbr_re1 = __shfl_xor_sync(mask, re1, halfnn2);
+          double nbr_im  = __shfl_xor_sync(mask, im,  halfnn2);
+          double nbr_im1 = __shfl_xor_sync(mask, im1, halfnn2); 
+
+
+          if (lane < partner) {
+              re1 = nbr_re;
+              im1 = nbr_im;
+          } 
+          else if (lane > partner) {
+              re = nbr_re1;
+              im = nbr_im1;
+          }
+          
+          // butterfly unit
+          CplxFma(tcs, tsn, re, im, re1, im1);
+          
+
+          if (nn == max_nn) {
+            shared_pre[idx0] = re;
+            shared_pim[idx0] = im;
+            shared_pre[idx1] = re1;
+            shared_pim[idx1] = im1;
+
+            __syncthreads();
+          }
+
+        } else {
+          re = shared_pre[idx0];
+          im = shared_pim[idx0];
+          re1 = shared_pre[idx1];
+          im1 = shared_pim[idx1];
+          
+          // size nn
+          CplxFma(tcs, tsn, re, im, re1, im1);
+
+          shared_pre[idx0] = re;
+          shared_pim[idx0] = im;
+          shared_pre[idx1] = re1;
+          shared_pim[idx1] = im1;
+
+          __syncthreads();
+        }
+      }
+    }
+
+    // multiply by omb^j
+    {
+      #pragma unroll
+      for (int i = 0; i < 2; ++i) {
+        int32_t idx0 = 2 * idx + i;
+        int32_t tidx = (ns8 + idx0 / 4 - 1) * 8 + idx0 % 4;
+
+        re = shared_pre[idx0];
+        im = shared_pim[idx0];
+
+        tcs = trig_table[tidx];
+        tsn = trig_table[tidx + 4];
+
+        // w * cplx
+        CplxMul(tcs, tsn, re, im);
+        
+        // load back
+        out_direct_dre[idx0] = __double2ll_rn(re);
+        out_direct_dim[idx0] = __double2ll_rn(im);
+      }
+
+    }
+}
+
 // 2048-point folding FFT
 __device__ inline void fft2048(uint64_t *out_direct_dre, uint64_t *out_direct_dim, double4 *shared_pre, double4 *shared_pim, const int32_t Ns2, const int &idx) {
 
@@ -671,6 +800,38 @@ __global__ void __launch_bounds__(64, 1) fft(uint32_t * out_direct_d, double * i
     }
 
     fft1024(out_direct_dre, out_direct_dim, shared_pre, shared_pim, Ns2, idx);
+}
+
+// Lvl1 warp shuffle
+__global__ void __launch_bounds__(256, 1) fft4x_warp(uint32_t * out_direct_d, double * in_direct_d, const int32_t Ns2) {
+
+    int ns = Ns2; 
+    int ns2 = Ns2 >> 1;// threads needed
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+
+    if (idx >= ns2)
+        return;
+
+    __shared__ double shared_pre[4 * 128];
+    __shared__ double shared_pim[4 * 128];
+
+    // in
+    double *__restrict__ in_direct_dre = (double *)in_direct_d;
+    double *__restrict__ in_direct_dim = (double *)(in_direct_dre + 4 * 128);
+    // out
+    uint *__restrict__ out_direct_dre = (uint *)out_direct_d;
+    uint *__restrict__ out_direct_dim = (uint *)(out_direct_dre + 4 * 128);
+
+    {  
+      int idx0 = idx << 1;
+      int idx1 = idx0 + 1;
+      shared_pre[idx0] = in_direct_dre[idx0];
+      shared_pre[idx1] = in_direct_dre[idx1];
+      shared_pim[idx0] = in_direct_dim[idx0];
+      shared_pim[idx1] = in_direct_dim[idx1];
+    }
+
+    fft1024_4xwarp(out_direct_dre, out_direct_dim, shared_pre, shared_pim, Ns2, idx);
 }
 
 // for Lvl2
