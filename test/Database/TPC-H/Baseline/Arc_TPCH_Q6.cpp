@@ -42,8 +42,12 @@ using namespace seal;
 
 size_t num = 1 << 8;
 
+constexpr int num_thread = 96; // setting multi threads
+
 void tpch_query6(size_t num)
 {
+	omp_set_num_threads(num_thread);
+	
     std::cout << "ArcEDB TPC-H Query6 Test: "<< std::endl;
     std::cout << "--------------------------------------------------------"<< std::endl;
     std::cout << "Records: " << num << std::endl;
@@ -106,6 +110,7 @@ void tpch_query6(size_t num)
     std::cout << "Filtering..." << std::endl;
 	start = std::chrono::system_clock::now();
 
+	#pragma omp parallel for
     for (size_t i = 0; i < num; i++)
     {
         TLWELvl1 pre_res;
