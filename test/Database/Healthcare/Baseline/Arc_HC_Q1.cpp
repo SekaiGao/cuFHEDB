@@ -28,6 +28,7 @@ using namespace arcedb;
  *  and medical conditions, potentially compromising patient privacy if not handled securely.
  */
 
+constexpr int num_thread = 96; // setting multi threads
 
 struct PlainTable {
     std::vector<std::string> Name;
@@ -97,6 +98,9 @@ void plaintext_query(const HealthCare& records) {
         - Prints the filtered records and the query evaluation time.
 */
 void healthcare_query1(const std::string &filePath) {
+
+	omp_set_num_threads(num_thread);
+	
     std::cout << "ArcEDB Healthcare Query1 Test: "<< std::endl;
     std::cout << "--------------------------------------------------------"<< std::endl;
 
@@ -172,6 +176,7 @@ void healthcare_query1(const std::string &filePath) {
 
     double filtering_time_d = 0;
     start = std::chrono::system_clock::now();
+	#pragma omp parallel for 
     for (size_t i = 0; i < records.Age.size(); i++) {
         TLWELvl1 pre_res;
 
