@@ -32,6 +32,8 @@ using namespace arcedb;
  *  of individuals if combined with other identifiable data.
  */
 
+constexpr int num_thread = 96; // setting multi threads
+
 struct PlainTable {
     std::vector<std::string> Name;
     std::vector<int> Age;
@@ -125,6 +127,8 @@ void plaintext_query(const HealthCare& records) {
         - Prints the sorted patient counts per admission type, along with the evaluation time.
 */
 void healthcare_query4(const std::string &filePath) {
+	omp_set_num_threads(num_thread);
+	
     std::cout << "ArcEDB Healthcare Query4 Test: "<< std::endl;
     std::cout << "--------------------------------------------------------"<< std::endl;
 
@@ -207,6 +211,7 @@ void healthcare_query4(const std::string &filePath) {
 
     std::vector<TFHEpp::TLWE<P>> filter_res1(rows);
     start = std::chrono::system_clock::now();
+	#pragma omp parallel for
     for (size_t i = 0; i < rows; ++i) {
         TLWELvl1 pre_res0, pre_res1;
 
@@ -226,6 +231,7 @@ void healthcare_query4(const std::string &filePath) {
     // GROUP BY Admission_Type
     std::cout << "Group By...\n";
     start = std::chrono::system_clock::now();
+	#pragma omp parallel for
     for (size_t i = 0; i < rows; ++i) {
         TLWELvl1 pre_res0, pre_res1;
         // Group By Admission Type
@@ -244,7 +250,8 @@ void healthcare_query4(const std::string &filePath) {
     for (int j = 0; j < admission_type_attr_size; ++j) {
 		agg_res[j] = {};
     }
-    
+
+	#pragma omp parallel for
     for (size_t i = 0; i < rows; ++i) {
         for (int j = 0; j < admission_type_attr_size; ++j) {
             //lift to 15 bit precision to perform homomorphic addition
