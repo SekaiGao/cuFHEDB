@@ -48,8 +48,12 @@ using namespace TFHEpp;
 
 size_t num = 1 << 4;
 
+constexpr int num_thread = 96; // setting multi threads
+
 void lift_and_and(TLWELvl1 &cipher1, TLWELvl1 &cipher2, TLWELvl1 &res, uint32_t scale_bits, TFHEpp::EvalKey &ek, TFHEpp::SecretKey &sk)
 {
+	omp_set_num_threads(num_thread);
+	
     using namespace TFHEpp;
     TLWELvl1 temp;
     for (int i = 0; i <= Lvl1::k * Lvl1::n; i++)
@@ -153,6 +157,7 @@ void tpch_query1(size_t num)
     std::chrono::system_clock::time_point start, end;
     double filtering_time_d = 0, filtering_time_h = 0, aggregation_time = 0;
     start = std::chrono::system_clock::now(); 
+	#pragma omp parallel for 
     for (size_t i = 0; i < num; i++)
     {
 
