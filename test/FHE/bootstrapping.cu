@@ -206,6 +206,15 @@ void Bootstrapping_test(uint32_t test_num) {
     end = std::chrono::system_clock::now();
     costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     std::cout << "Bootstrapping latency: " << costs / test_num << "μs." << std::endl;
+
+    std::cout << "TFHEpp 128-bit key bundle bootstrapping (multi-thread): " << std::endl;
+    start = std::chrono::system_clock::now();
+    #pragma omp parallel for
+    for (int i = 0; i < test_num; ++i)
+        TFHEpp::GateBootstrappingTLWE2TLWEFFT<bkP>(resh[i], tlwe[i], *ek.bkfftlvl01, TFHEpp::μ_polygen<P>(u));
+    end = std::chrono::system_clock::now();
+    costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "Bootstrapping multi-threaded throughput: " << 1000000 * test_num / costs << "TP/s." << std::endl;
     
     std::cout << "--------------------------------------------------------"<< std::endl;
 
@@ -216,6 +225,15 @@ void Bootstrapping_test(uint32_t test_num) {
     end = std::chrono::system_clock::now();
     costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     std::cout << "Bootstrapping latency: " << costs / test_num << "μs." << std::endl;
+
+    std::cout << "TFHEpp 153-bit key bundle bootstrapping (multi-thread): " << std::endl;
+    start = std::chrono::system_clock::now();
+    #pragma omp parallel for
+    for (int i = 0; i < test_num; ++i)
+        TFHEpp::GateBootstrappingTLWE2TLWEFFT<bkP2>(resh2[i], tlwe[i], *ek.bkfftlvl02, TFHEpp::μ_polygen<P2>(u));
+    end = std::chrono::system_clock::now();
+    costs = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "Bootstrapping multi-threaded throughput: " << 1000000 * test_num / costs << "TP/s." << std::endl;
 
     std::cout << "--------------------------------------------------------"<< std::endl;
 
