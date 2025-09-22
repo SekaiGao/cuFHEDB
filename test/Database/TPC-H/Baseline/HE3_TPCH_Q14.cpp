@@ -138,7 +138,6 @@ void tpch_query14(size_t num)
 	#pragma omp parallel for 
     for (size_t i = 0; i < num; i++)
     {
-
         TLWELvl1 pre_res;
         greater_than<Lvl2>(shipdate_ciphers[i], predicate1_cipher, filter_res[i], compprecision, ek, LOGIC);
         less_than<Lvl2>(shipdate_ciphers[i], predicate2_cipher, pre_res, compprecision, ek, LOGIC);
