@@ -466,4 +466,27 @@ __device__ inline void add64_4(uint64_t *a, uint64_t *b) {
   a[2] += b[2];
   a[3] += b[3];
 }
+
+__device__ inline void CplxMul(double c, double s, double &re, double &im) {
+    double re0 = re, im0 = im;
+    // (re + i*im) * (c + i*s)
+    re = fma(-im0, s, re0 * c);  // re*c - im*s
+    im = fma( im0, c, re0 * s);  // re*s + im*c
+}
+
+__device__ inline void CplxFma(double c, double s,
+                                     double &re0, double &im0,
+                                     double &re1, double &im1) {
+    // tmp = w * (re1 + i*im1)
+    double tmp_re = fma(-im1, s, re1 * c); // re1*c - im1*s
+    double tmp_im = fma( im1, c, re1 * s); // re1*s + im1*c
+
+    double new_re1 = re0 - tmp_re;
+    double new_im1 = im0 - tmp_im;
+    re0 += tmp_re;
+    im0 += tmp_im;
+    re1  = new_re1;
+    im1  = new_im1;
+}
+
 };
