@@ -56,8 +56,12 @@ using namespace seal;
 size_t l_num = 1 << 4;
 size_t o_num = 1 << 4;
 
+constexpr int num_thread = 96; // setting multi threads
+
 void tpch_query12(size_t l_num, size_t o_num)
 {
+	omp_set_num_threads(num_thread);
+	
     std::cout << "ArcEDB TPC-H Query12 Test: "<< std::endl;
     std::cout << "--------------------------------------------------------"<< std::endl;
     std::cout << "Records: " << l_num * o_num << std::endl;
@@ -140,11 +144,13 @@ void tpch_query12(size_t l_num, size_t o_num)
     start = std::chrono::system_clock::now();
 
     // filtering order table
+	#pragma omp parallel for
     for (size_t i = 0; i < o_num; i++) {
         less_than_tfhepp(orderpriority_ciphers[i], predicate_upper_bound_cipher, order_res[i],  sk);
     }
 
     // filtering lineitem table
+	#pragma omp parallel for
     for (size_t i = 0; i < l_num; i++) {
 
         TLWELvl1 pre_res;
@@ -173,6 +179,7 @@ void tpch_query12(size_t l_num, size_t o_num)
 
     start = std::chrono::system_clock::now();
     // table join
+	#pragma omp parallel for
     for (size_t i = 0; i < l_num; i++) {
         for (size_t j = 0; j < o_num; ++j) {
             TLWELvl1 pre_res;
@@ -200,6 +207,7 @@ void tpch_query12(size_t l_num, size_t o_num)
     
 
     start = std::chrono::system_clock::now();
+	#pragma omp parallel for
     for (size_t i = 0; i < l_num; i++) {
         count_mail_order[i] = {};
         count_ship_order[i] = {};
